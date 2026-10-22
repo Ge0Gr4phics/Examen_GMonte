@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { View, Text, Image, Pressable, StyleSheet } from 'react-native'
+import { View, Text, Image, Pressable, StyleSheet, Alert } from 'react-native'
 import SelectorRol from './SelectorRol'
 import { ETIQUETA_ROL } from '../types'
 import type { MiembroEquipo, Rol } from '../types'
@@ -29,7 +29,19 @@ export default function TarjetaMiembro({ miembro, onCambiarRol, onQuitar }: Prop
         <View>
           <Text style={estilos.tipos}>Tipos: {miembro.tipos.join(', ')}</Text>
           <SelectorRol actual={miembro.rol} onElegir={(rol) => onCambiarRol(miembro.id, rol)} />
-          <Pressable onClick={() => onQuitar(miembro)} style={estilos.botonQuitar}>
+          <Pressable
+            onPress={() => {
+              Alert.alert(
+                'Quitar Pokémon',
+                `¿Quieres sacar a ${miembro.nombre} de tu equipo?`,
+                [
+                  { text: 'Cancelar', style: 'cancel' },
+                  { text: 'Quitar', style: 'destructive', onPress: () => onQuitar(miembro) },
+                ],
+              )
+            }}
+            style={estilos.botonQuitar}
+          >
             <Text style={estilos.textoQuitar}>Quitar</Text>
           </Pressable>
         </View>
@@ -47,6 +59,6 @@ const estilos = StyleSheet.create({
   rol: { color: C.suave, fontSize: 13, marginTop: 2 },
   flecha: { color: C.suave, fontSize: 14, paddingHorizontal: 6 },
   tipos: { color: C.suave, fontSize: 13, marginTop: 10 },
-  botonQuitar: { height: 28, paddingHorizontal: 10, borderRadius: 6, backgroundColor: '#7f1d1d', justifyContent: 'center', alignSelf: 'flex-start', marginTop: 12 },
-  textoQuitar: { color: '#fecaca', fontWeight: '700' },
+  botonQuitar: { minHeight: 44, paddingHorizontal: 14, borderRadius: 8, backgroundColor: '#7f1d1d', justifyContent: 'center', alignSelf: 'flex-start', marginTop: 12, paddingVertical: 8 },
+  textoQuitar: { color: '#fecaca', fontWeight: '700', fontSize: 14 },
 })

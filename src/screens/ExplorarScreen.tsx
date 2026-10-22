@@ -14,15 +14,26 @@ export default function ExplorarScreen() {
   const [busqueda, setBusqueda] = useState('')
   const [visibles, setVisibles] = useState<PokemonResumen[]>([])
 
+  async function cargarLista() {
+    setEstado({ tipo: 'cargando' })
+    try {
+      const datos = await obtenerLista()
+      setEstado({ tipo: 'exito', datos })
+      setVisibles(datos.filter((p) => p.nombre.toLowerCase().includes(busqueda.toLowerCase())))
+    } catch {
+      setEstado({ tipo: 'error', mensaje: 'No se pudo cargar la lista. Revisa tu conexión.' })
+      setVisibles([])
+    }
+  }
+
   useEffect(() => {
-    obtenerLista().then((datos) => setEstado({ tipo: 'exito', datos }))
+    void cargarLista()
   }, [])
 
   useEffect(() => {
-    if (estado.tipo === 'exito') {
-      setVisibles(estado.datos.filter((p) => p.nombre.includes(busqueda.toLowerCase())))
-    }
-  }, [estado])
+    if (estado.tipo !== 'exito') return
+    setVisibles(estado.datos.filter((p) => p.nombre.toLowerCase().includes(busqueda.toLowerCase())))
+  }, [estado, busqueda])
 
   return (
     <View style={estilos.pantalla}>
@@ -33,6 +44,14 @@ export default function ExplorarScreen() {
       <TextInput style={estilos.buscador} placeholder="Buscar por nombre..." placeholderTextColor={C.suave} value={busqueda} onChangeText={setBusqueda} autoCapitalize="none" />
       <View style={{ flex: 1 }}>
         {estado.tipo === 'cargando' && <View style={estilos.centro}><ActivityIndicator size="large" color={C.acento} /></View>}
+        {estado.tipo === 'error' && (
+          <View style={estilos.centro}>
+            <Text style={estilos.error}>{estado.mensaje}</Text>
+            <Pressable style={estilos.botonReintentar} onPress={() => void cargarLista()}>
+              <Text style={estilos.textoReintentar}>Reintentar</Text>
+            </Pressable>
+          </View>
+        )}
         {estado.tipo === 'exito' && (
           <FlatList
             data={visibles}

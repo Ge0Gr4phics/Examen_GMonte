@@ -5,15 +5,24 @@ import { escucharSesion, registrarUsuario, entrarUsuario, salirUsuario } from '.
 import { obtenerEquipo, agregarMiembro, actualizarRol, quitarMiembro, sembrarEquipo } from '../services/equipoService'
 import type { MiembroEquipo, PokemonDetalle, Rol, UsuarioActual } from '../types'
 
-const CLAVE_CACHE = '@equipo_cache'
-
-async function guardarCache(lista: MiembroEquipo[]): Promise<void> {
-  await AsyncStorage.setItem(CLAVE_CACHE, String(lista))
+function claveCache(uid: string): string {
+  return `@equipo_cache:${uid}`
 }
 
-async function leerCache(): Promise<MiembroEquipo[]> {
-  const crudo = await AsyncStorage.getItem(CLAVE_CACHE)
-  return crudo ? JSON.parse(crudo) : []
+async function guardarCache(uid: string, lista: MiembroEquipo[]): Promise<void> {
+  await AsyncStorage.setItem(claveCache(uid), JSON.stringify(lista))
+}
+
+async function leerCache(uid: string): Promise<MiembroEquipo[]> {
+  try {
+    const crudo = await AsyncStorage.getItem(claveCache(uid))
+    if (!crudo) return []
+    const datos = JSON.parse(crudo)
+    return Array.isArray(datos) ? datos : []
+  } catch {
+    await AsyncStorage.removeItem(claveCache(uid))
+    return []
+  }
 }
 
 interface ValorContexto {
@@ -54,10 +63,11 @@ export function EquipoProvider({ children }: { children: ReactNode }) {
   // Al haber usuario: primero se muestra la caché y luego se pide el equipo a Firestore.
   useEffect(() => {
     if (!usuario) return
+    const uid = usuario.uid
     async function iniciar() {
-      const cache = await leerCache()
+      const cache = await leerCache(uid)
       setEquipo(cache)
-      await cargarEquipo()
+      await cargarEquipo(uid)
     }
     iniciar()
   }, [usuario?.uid])
@@ -67,13 +77,13 @@ export function EquipoProvider({ children }: { children: ReactNode }) {
     return usuario.uid
   }
 
-  async function cargarEquipo(): Promise<void> {
+  async function cargarEquipo(uid: string = uidActual()): Promise<void> {
     setCargandoEquipo(true)
     setErrorEquipo('')
     try {
-      const datos = await obtenerEquipo(uidActual())
+      const datos = await obtenerEquipo(uid)
       setEquipo(datos)
-      await guardarCache(datos)
+      await guardarCache(uid, datos)
     } catch (e) {
       setErrorEquipo('No se pudo cargar tu equipo. Revisa tu conexión y las reglas de Firestore.')
     } finally {
@@ -86,7 +96,7 @@ export function EquipoProvider({ children }: { children: ReactNode }) {
     const nuevo = await agregarMiembro(uidActual(), pokemon)
     const lista = [...equipo, nuevo]
     setEquipo(lista)
-    await guardarCache(lista)
+    await guardarCache(uidActual(), lista)
     return 'agregado'
   }
 
@@ -94,15 +104,14 @@ export function EquipoProvider({ children }: { children: ReactNode }) {
     await quitarMiembro(uidActual(), id)
     const lista = equipo.filter((m) => m.id !== id)
     setEquipo(lista)
-    await guardarCache(lista)
+    await guardarCache(uidActual(), lista)
   }
 
   async function cambiarRol(id: string, rol: Rol): Promise<void> {
-    const miembro = equipo.find((m) => m.id === id)
-    if (!miembro) return
+    const lista = equipo.map((m) => (m.id === id ? { ...m, rol } : m))
+    setEquipo(lista)
+    await guardarCache(uidActual(), lista)
     await actualizarRol(uidActual(), id, rol)
-    miembro.rol = rol
-    setEquipo(equipo)
   }
 
   async function sembrar(): Promise<void> {
@@ -119,6 +128,8 @@ export function EquipoProvider({ children }: { children: ReactNode }) {
   }
 
   async function salir(): Promise<void> {
+    if (usuario) await AsyncStorage.removeItem(claveCache(usuario.uid))
+    setEquipo([])
     await salirUsuario()
   }
 
