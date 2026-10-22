@@ -13,11 +13,12 @@ interface Props {
 
 export default function TarjetaMiembro({ miembro, onCambiarRol, onQuitar }: Props) {
   const [expandido, setExpandido] = useState(false)
+  const sprite = miembro.sprite || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${miembro.pokemonId}.png`
 
   return (
     <View style={estilos.tarjeta}>
       <Pressable style={estilos.cabecera} onPress={() => setExpandido((v) => !v)}>
-        {miembro.sprite ? <Image source={{ uri: miembro.sprite }} style={estilos.imagen} /> : <Text style={estilos.placeholder}>❔</Text>}
+        <Image source={{ uri: sprite }} style={estilos.imagen} />
         <View style={{ flex: 1 }}>
           <Text style={estilos.nombre}>{miembro.nombre}</Text>
           <Text style={estilos.rol}>{ETIQUETA_ROL[miembro.rol]}</Text>
@@ -54,7 +55,6 @@ const estilos = StyleSheet.create({
   tarjeta: { backgroundColor: C.tarjeta, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: C.borde },
   cabecera: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56 },
   imagen: { width: 56, height: 56 },
-  placeholder: { width: 56, textAlign: 'center', fontSize: 28 },
   nombre: { color: C.texto, fontSize: 17, fontWeight: '700', textTransform: 'capitalize' },
   rol: { color: C.suave, fontSize: 13, marginTop: 2 },
   flecha: { color: C.suave, fontSize: 14, paddingHorizontal: 6 },
