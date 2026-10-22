@@ -1,0 +1,4 @@
+Prueba de autenticación:
+- Usuario A: crea sesión y accede a usuarios/A/equipo -> permitido.
+- Usuario B: intenta leer usuarios/A/equipo -> denegado.
+- Ambientes: la app guarda la sesión por usuario y conserva el equipo asociado a ese uid.

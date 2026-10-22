@@ -1,0 +1,6 @@
+Regla aplicada: match /usuarios/{uid}/equipo/{pokemonId} { allow read, write: if request.auth != null && request.auth.uid == uid; }
+Resultado esperado:
+- autenticado como uid correcto: permitido
+- autenticado como uid distinto o sin autenticar: denegado
+
+Esto evita que otra cuenta vea el equipo ajeno.

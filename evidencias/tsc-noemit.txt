@@ -1,0 +1,3 @@
+Comando ejecutado: npx tsc --noEmit
+Resultado: exit code 0
+Estado: sin errores de TypeScript.
